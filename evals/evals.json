@@ -1,0 +1,51 @@
+{
+  "skill_name": "design-skin",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have this screenshot of Stripe's dashboard UI. Extract the design style and generate a Tailwind theme I can use in my project. Focus on the color palette, typography, and spacing. I want both light and dark mode support.",
+      "expected_output": "A complete Tailwind config extending existing theme with Stripe-like colors (blue primary, clean grays), Inter/system font stack, consistent spacing scale, plus a skin.css file with CSS custom properties and dark mode support. Should include a preview HTML page.",
+      "files": [],
+      "expectations": [
+        "Generates a skin.json with structured design tokens",
+        "Generates tailwind.skin.config.js with colors, fonts, spacing, shadows",
+        "Generates skin.css with CSS custom properties for light and dark mode",
+        "Generates a preview HTML file",
+        "Color palette includes primary blue, neutral grays, and semantic colors (success, error, warning)",
+        "Typography includes a system/clean font stack",
+        "All color values in the Tailwind config reference CSS custom properties for dark mode",
+        "Preview HTML demonstrates actual components styled with the skin"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Extract the design style from this Figma file and generate a React theme package I can use. Here's the URL: https://figma.com/design/abc123/MyApp?node-id=0-1. I want typed theme objects with a ThemeProvider.",
+      "expected_output": "A React theme package with typed SkinTheme object, SkinProvider component with dark/light mode support, useSkin hook, and CSS custom properties file. All values extracted from the Figma file's variables and styles.",
+      "files": [],
+      "expectations": [
+        "Fetches design context from Figma using get_design_context or get_variable_defs",
+        "Generates a skin.json intermediate format",
+        "Generates skin-theme.ts with full TypeScript types",
+        "Generates SkinProvider.tsx with color mode support",
+        "Generates useSkin.ts hook",
+        "Generated code is syntactically valid TypeScript/TSX",
+        "Theme values trace back to Figma variables or extracted values"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to create a design skin that looks like Linear (the project management tool). Dark mode first, minimal, crisp. Generate CSS custom properties I can drop into any project. I don't have screenshots, just go from the general aesthetic.",
+      "expected_output": "A CSS-based design skin capturing Linear's aesthetic — dark backgrounds, subtle borders, clean typography, minimal shadows, accent colors. Should include variables.css and utility classes.",
+      "files": [],
+      "expectations": [
+        "Generates skin.json capturing Linear's aesthetic (dark, minimal, crisp)",
+        "Generates skin-variables.css with complete token set",
+        "Dark mode is the primary/default mode",
+        "Color palette uses dark backgrounds (gray-900/950 range)",
+        "Typography uses a clean, modern sans-serif font",
+        "Includes subtle border treatments and minimal shadow usage",
+        "Generates a preview HTML that demonstrates the skin"
+      ]
+    }
+  ]
+}
