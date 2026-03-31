@@ -30,24 +30,33 @@ Input (any combination):
 
         ↓ Extract & Analyze
 
-Design Skin JSON (structured intermediate format):
-  ├── colors (palette, semantic mappings, gradients)
-  ├── typography (font stacks, scale, weights)
-  ├── spacing (scale, rhythm)
-  ├── borders & radii
-  ├── shadows & elevation
-  ├── effects (blur, opacity patterns)
-  ├── motion (timing, easing preferences)
-  └── style notes (qualitative feel, mood, personality)
+Skin Profile (structured intermediate — skin.json):
+  ├── tokens     — hard values (palette, type, space, depth, motion, layout, components...)
+  ├── character  — soft qualities (mood, composition, visual language, voice...)
+  └── spectacle  — advanced effects (3D, particles, shaders, scroll, cursor...)
 
         ↓ Generate
 
 Output (user's choice):
-  ├── Tailwind CSS config (tailwind.config.js + CSS layer)
-  ├── CSS Custom Properties (variables.css + utility classes)
-  ├── React Theme (theme.ts + ThemeProvider + hooks)
+  ├── Tailwind CSS config + CSS layer
+  ├── CSS Custom Properties + utility classes
+  ├── React Theme (typed) + Provider + hooks
   └── Combined package (all of the above)
 ```
+
+The profile has three layers — see `references/skin-schema.md` for the full spec:
+
+- **tokens**: Everything with a concrete CSS equivalent. Colors, typography, spacing,
+  surfaces, depth, motion, layout, icons, component patterns. These become your CSS
+  variables and config values.
+- **character**: The feeling. Mood, personality, visual language, composition style,
+  interaction feel, brand voice. These guide subjective decisions when applying the skin.
+- **spectacle**: Advanced rendering beyond flat CSS. 3D, particles, shaders, scroll
+  effects, cursor effects, glassmorphism, canvas drawings, SVG animations. Each has an
+  `active` flag — only include what's actually present.
+
+The schema is open-ended — if the source design has qualities not covered by the standard
+fields, add them under the appropriate layer.
 
 ## Figma MCP Dependency
 
@@ -70,104 +79,88 @@ Identify what the user has provided and collect everything before extracting.
 
 When the user provides images (uploaded files, paths, or URLs):
 1. Read each image using the Read tool
-2. Analyze the visual design systematically — don't just glance, really study it:
-   - **Colors**: Identify the full palette. Look for primary, secondary, accent colors.
-     Note background colors, text colors, border colors, hover/active states.
-     Pay attention to gradients, overlays, and transparency patterns.
-   - **Typography**: Identify font families (or closest match if not exact).
-     Note the type scale — how many distinct sizes are used and their relative hierarchy.
-     Look at font weights, letter-spacing, line-height patterns.
-   - **Spacing**: Measure the rhythm. Is it a 4px grid? 8px? Note padding patterns
-     in cards, buttons, sections. Look at gap patterns in layouts.
-   - **Borders & Radii**: Sharp corners or rounded? How rounded? Consistent or varied?
-     Border widths and colors.
-   - **Shadows & Depth**: Flat design or layered? Shadow intensity, blur, spread patterns.
-     How many elevation levels?
-   - **Visual Effects**: Blur, grain, noise, texture overlays, glassmorphism,
-     gradient meshes, or other distinctive effects.
-   - **Overall Feel**: Is this minimal or dense? Warm or cool? Playful or serious?
-     What makes it distinctive?
-
-3. If multiple images show the same design system from different angles, synthesize them
-   into one coherent understanding — don't treat each image independently.
+2. Analyze systematically across all three layers:
+   - **tokens**: Extract every measurable property — colors, fonts, sizes, spacing,
+     radii, shadows, grid structure, icon style, component patterns
+   - **character**: Assess the feeling — what mood does this evoke? What's the density,
+     complexity, ornamentation level? How is hierarchy communicated? What's the
+     composition strategy?
+   - **spectacle**: Identify anything beyond standard CSS — animated backgrounds,
+     particles, 3D elements, scroll effects, custom cursors, glassmorphism, noise/grain
+     textures. If you can see it but can't express it in a CSS property, it belongs here.
+3. When multiple images show the same design system, synthesize into one coherent
+   understanding — don't treat each image independently.
 
 ### From Figma Files
 
 When the user provides a Figma URL:
 1. Extract fileKey and nodeId from the URL
-2. Fetch structured data using the Figma MCP tools in this order:
-
-   **a. Get visual overview first:**
-   ```
-   get_screenshot(fileKey, nodeId)  → see what we're working with
-   get_metadata(fileKey, nodeId)    → understand structure
-   ```
-
-   **b. Extract variables/tokens (the gold mine):**
-   ```
-   get_variable_defs(fileKey, nodeId) → design tokens already defined
-   ```
-   Variables give you the most reliable extraction — they're the designer's own token
-   definitions. Map them directly:
-   - COLOR variables → color tokens
-   - FLOAT variables → spacing, radius, font-size tokens
-   - STRING variables → font-family tokens
-
-   **c. Get design context for key components:**
-   ```
-   get_design_context(fileKey, nodeId) → detailed component specs
-   ```
-   This returns typography specs, color values, spacing, and component structure.
-   Use it on representative components (buttons, cards, inputs, headers) to understand
-   the design language.
-
-   **d. Search for design system assets:**
-   ```
-   search_design_system(query="button", fileKey)  → find components
-   search_design_system(query="color", fileKey)    → find color styles
-   ```
-
-3. Prioritize data sources in this order:
-   - Figma variables (most authoritative — designer defined these as tokens)
-   - Figma styles (text styles, color styles, effect styles)
-   - Component property values (colors, sizes extracted from actual components)
-   - Visual measurement from screenshots (last resort)
+2. Fetch structured data using Figma MCP tools:
+   - `get_screenshot` + `get_metadata` → visual overview and structure
+   - `get_variable_defs` → design tokens (the most authoritative source)
+   - `get_design_context` → component specs (typography, colors, spacing)
+   - `search_design_system` → library components, variables, styles
+3. Prioritize: Figma variables > styles > component values > visual measurement
 
 ### From Verbal Description
 
-When the user describes a style verbally ("I want something like Apple's design" or
-"dark mode, neon accents, glassmorphism"), use this as a style direction guide that
-informs your extraction and generation choices.
+When the user describes a style verbally ("like Linear but warmer", "Apple meets
+brutalism"), use this to guide all three layers of extraction and generation.
 
-## Phase 2: Build the Design Skin JSON
+## Phase 2: Build the Skin Profile
 
-This is the intermediate structured format. Always build this before generating output files.
-Read `references/skin-schema.md` for the complete schema specification.
+Always build the profile before generating output files. Read `references/skin-schema.md`
+for the complete field reference.
 
-The JSON has these top-level sections:
+The profile JSON:
 
 ```json
 {
-  "meta": {
-    "name": "skin-name",
-    "description": "Brief description of the design aesthetic",
-    "source": "figma | images | hybrid | verbal",
-    "generated": "2024-01-15T10:30:00Z"
+  "meta": { "name": "...", "about": "...", "sources": [], "created": "..." },
+  "tokens": {
+    "palette": { },
+    "roles": { },
+    "type": { "stacks": {}, "scale": {}, "character": "..." },
+    "space": { "grid": {}, "roles": {}, "density": "..." },
+    "surfaces": { },
+    "depth": { },
+    "motion": { },
+    "layout": { },
+    "icons": { },
+    "components": { }
   },
-  "colors": { },
-  "typography": { },
-  "spacing": { },
-  "borders": { },
-  "shadows": { },
-  "effects": { },
-  "motion": { },
-  "styleNotes": { }
+  "character": {
+    "personality": { },
+    "visual_language": { },
+    "composition": { },
+    "imagery": { },
+    "interaction_feel": { },
+    "voice": { }
+  },
+  "spectacle": {
+    "overview": { },
+    "backgrounds": { },
+    "particles": { },
+    "three_d": { },
+    "shaders": { },
+    "scroll": { },
+    "text": { },
+    "cursor": { },
+    "images": { },
+    "glass": { },
+    "canvas": { },
+    "svg": { },
+    "notes": ""
+  }
 }
 ```
 
-**Present the Design Skin JSON to the user for review before generating output files.**
-Walk through each section briefly and ask if anything looks off. This is the checkpoint
-where corrections are cheapest.
+Only populate what's actually present — don't invent. The `spectacle` layer may be
+entirely empty for a clean corporate design, and that's correct.
+
+**Present the profile to the user for review before generating output files.** Walk
+through each layer briefly and ask if anything looks off. This is the checkpoint where
+corrections are cheapest.
 
 ## Phase 3: Generate Output Files
 
@@ -175,143 +168,103 @@ Ask the user which output format they want (or generate all if they're unsure):
 
 ### Option A: Tailwind CSS Config
 
-Read `references/tailwind-output.md` for the detailed template.
-
-Generate:
-- `tailwind.skin.config.js` — extends the user's existing Tailwind config
-- `skin.css` — CSS layer with custom properties and utility classes
-- `skin-preview.html` — standalone preview page showing all tokens in action
-
-The Tailwind config should use `extend` so it doesn't clobber existing settings:
-```js
-// tailwind.skin.config.js — merge into your tailwind.config.js
-export default {
-  theme: {
-    extend: {
-      colors: { /* extracted palette */ },
-      fontFamily: { /* extracted fonts */ },
-      // ...
-    }
-  }
-}
-```
+Read `references/tailwind-output.md` for the detailed template. Generate:
+- `tailwind.skin.config.js` — extends the user's existing Tailwind config with `theme.extend`
+- `skin.css` — CSS layer with custom properties (light + dark) and base styles
+- `preview.html` — standalone preview page
 
 ### Option B: CSS Custom Properties
 
-Read `references/css-output.md` for the detailed template.
-
-Generate:
-- `skin-variables.css` — all tokens as CSS custom properties
+Read `references/css-output.md` for the detailed template. Generate:
+- `skin-variables.css` — all tokens as CSS custom properties with light/dark modes
 - `skin-utilities.css` — utility classes built on the variables
-- `skin-preview.html` — standalone preview page
+- `preview.html` — standalone preview page
 
 ### Option C: React Theme
 
-Read `references/react-output.md` for the detailed template.
-
-Generate:
-- `skin-theme.ts` — typed theme object with all tokens
-- `SkinProvider.tsx` — React context provider with dark/light mode support
-- `useSkin.ts` — hook for consuming the theme
+Read `references/react-output.md` for the detailed template. Generate:
+- `skin-theme.ts` — typed theme object
+- `SkinProvider.tsx` — context provider with dark/light mode support
+- `useSkin.ts` — consumption hook
 - `skin.css` — CSS custom properties synced with the theme
-- `SkinPreview.tsx` — component showing all tokens
+- `preview.html` — standalone preview page
 
 ### Option D: Combined Package
 
-Generate all of the above in a structured directory:
+All of the above, organized:
 ```
 design-skin-output/
-├── skin.json             ← the Design Skin JSON
+├── skin.json
 ├── tailwind/
-│   ├── tailwind.skin.config.js
-│   └── skin.css
 ├── css/
-│   ├── skin-variables.css
-│   └── skin-utilities.css
 ├── react/
-│   ├── skin-theme.ts
-│   ├── SkinProvider.tsx
-│   ├── useSkin.ts
-│   └── skin.css
-└── preview.html          ← universal preview page
+└── preview.html
 ```
+
+### How `character` and `spectacle` map to output
+
+The `tokens` layer maps directly to CSS variables and config values. The other two layers
+inform the output differently:
+
+**`character` → generation guidance**: The `character` layer is embedded as comments and
+documentation in the output files. When the skin is used later for vibe-coding, these
+comments tell the AI (or the developer) *how* to apply the tokens — what kind of hover
+effects to favor, how much whitespace to use, whether to lean formal or playful.
+
+**`spectacle` → implementation recipes**: For each active spectacle entry, generate a
+commented code block or reference snippet showing how to implement that effect. Include
+technology choice, CDN imports needed, and a degradation strategy. These go into the
+preview.html as live demonstrations where feasible, and as documented recipes in a
+`spectacle-recipes.js` file for effects too heavy to inline.
 
 ## Phase 4: Preview & Validate
 
-Always generate a preview that shows the skin in action. The preview **must be a single
-self-contained HTML file** with all CSS inlined (no external file references) so it works
-when opened directly in a browser.
+Always generate a preview as a **single self-contained HTML file** with all CSS inlined.
 
-The preview page should include:
+The preview should include:
+1. **Color Palette** — primitive swatches + semantic token grid (light and dark)
+2. **Typography Scale** — every level rendered with actual imported fonts
+3. **Spacing Visualization** — boxes at each scale step
+4. **Component Samples** — buttons, cards, inputs, badges, alerts, nav elements
+5. **Dark/Light Toggle** — in the top-right, toggling `.dark` on `<html>`
+6. **Spectacle Demos** — live demonstrations of any active spectacle effects
+   (or screenshots with "requires [technology]" labels for heavy effects)
 
-1. **Color Palette** — all colors rendered as swatches with labels and hex values.
-   Show both primitive palette (full shade scale) and semantic tokens.
-2. **Typography Scale** — each type scale level rendered as a sample sentence using
-   the actual imported fonts. Include font name, size, weight, and line-height labels.
-3. **Spacing Visualization** — boxes at each spacing scale step with pixel values.
-4. **Component Samples** — at minimum: primary button, secondary/outline button, card
-   with title/body/footer, text input with label, badge/tag, and alert/toast. Style
-   every component using only the skin's CSS custom properties.
-5. **Dark/Light Toggle** — a toggle button in the top-right corner that switches between
-   modes by toggling the `dark` class on `<html>`. Both modes should look complete and
-   polished — dark mode is not an afterthought.
-
-The preview serves two purposes:
-- The user can immediately see if the extraction is accurate
-- It demonstrates that the skin actually works as functional code
-
-Open the preview in the browser (`open preview.html`) and ask the user to review it.
+Open the preview in the browser and ask the user to review it.
 
 ## Phase 5: Iterate
 
 If the user wants changes:
-- Adjust the Design Skin JSON
+- Adjust the skin profile
 - Regenerate only the affected output files
 - Refresh the preview
 
-Common adjustments:
-- "Make the colors warmer/cooler" → shift hue of the palette
-- "The spacing feels too tight/loose" → scale the spacing multiplier
-- "Add a dark mode" → generate mode-aware variables with inverted semantics
-- "The fonts don't match" → swap font families, adjust scale
-
 ## File Naming Convention
 
-Use these exact file names for consistency across all skins. This matters because
-downstream tools and vibe-coding sessions will look for these specific names.
-
-| Output Format | Files |
+| Output | Files |
 |---|---|
 | Tailwind | `skin.json`, `tailwind.skin.config.js`, `skin.css`, `preview.html` |
 | CSS | `skin.json`, `skin-variables.css`, `skin-utilities.css`, `preview.html` |
 | React | `skin.json`, `skin-theme.ts`, `SkinProvider.tsx`, `useSkin.ts`, `skin.css`, `preview.html` |
-| Combined | All above, organized in subdirectories (see Option D) |
+| Combined | All above in subdirectories |
 
-The `skin.json` is always generated regardless of output format — it's the canonical
-representation of the extracted design and enables re-generating different output formats
-later without re-extracting.
+`skin.json` is always generated — it's the canonical profile and enables re-generating
+different output formats later without re-extracting.
 
-## Important Principles
+## Principles
 
-**Accuracy over creativity.** When extracting from a reference, the goal is to faithfully
-capture what's there — not to "improve" it. The user chose that design for a reason.
-Creative liberties belong in the generation phase, not the extraction phase.
+**Accuracy over creativity.** Extraction captures what's there, not what could be better.
 
-**Tokens, not hardcoded values.** Every value in the output should trace back to a named
-token. This makes the skin maintainable and adjustable. A button's background isn't
-`#3B82F6`, it's `var(--skin-color-primary)`.
+**Tokens, not magic numbers.** Every value traces to a named token. `var(--skin-primary)`,
+never `#3B82F6`.
 
-**Extend, don't replace.** Generated configs should layer on top of existing project
-settings. Use Tailwind's `extend`, CSS layers with low specificity, and React context
-that falls through to defaults.
+**Extend, don't replace.** Tailwind `extend`, CSS layers, React context fallthrough.
 
-**Dark mode is not optional.** If the source design doesn't include a dark variant,
-generate a reasonable one automatically. Use the extracted palette to derive dark-mode
-equivalents (invert lightness, preserve hue/saturation).
+**Dark mode always.** Derive it automatically if the source only has one mode.
 
-**Fonts need fallbacks.** Always include a fallback stack. If the exact font from the
-design isn't available as a web font, suggest the closest Google Fonts alternative and
-note the substitution.
+**Fonts need fallbacks.** Suggest closest Google Fonts alternative if exact match unavailable.
 
-**The preview is the proof.** Never ship extracted tokens without a working preview.
-If the preview looks wrong, the tokens are wrong — go back and fix them.
+**The preview is the proof.** If the preview looks wrong, the tokens are wrong.
+
+**Open schema.** If the design has something not in the standard fields, add it. The
+schema serves the design, not the other way around.
